@@ -1,6 +1,6 @@
 const express = require("express");
 const upload = require("../multerConfig/storageMulter");
-const { login, register, isClientAuthenticated } = require("../controllers/auth/ClientController");
+const { login, register, isAuthenticated } = require("../controllers/auth/ClientController");
 const { getSaleList, editSale, getSale, createSale } = require("../controllers/ClientController");
 
 const router = express.Router();
@@ -9,7 +9,7 @@ router.post("/login", login);
 
 router.post("/register", upload.array('files'), register);
 
-router.get("/authenticate", isClientAuthenticated);
+router.get("/authenticate", isAuthenticated);
 
 router.get("/:id/sale/all", getSaleList);
 

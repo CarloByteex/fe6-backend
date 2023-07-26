@@ -10,7 +10,7 @@ const login = async (req, res) => {
   try {
     const client = await Client.findOne({ email }).exec();
 
-    if (!client) return res.status(401).json({ response: 'User not found' });
+    if (!client) return res.status(401).json({ response: 'User not found!' });
 
     const { _id: id, password: passwordHash } = client;
     const verifyPassword = await bcrypt.compare(password, passwordHash);
@@ -23,7 +23,7 @@ const login = async (req, res) => {
         res.status(200).json({ token, client });
       });
     } else {
-      res.status(401).json({ response: 'Unauthorized' });
+      res.status(401).json({ response: 'Incorrect password!' });
     }
   } catch (error) {
     res.sendStatus(500);
@@ -31,7 +31,7 @@ const login = async (req, res) => {
 };
 
 const register = async (req, res) => {
-  const { name, email, phone, place, password } = req.body;
+  const { name, email, phone, place, password, isAdmin } = req.body;
   const file = req.files
 
   try {
@@ -44,6 +44,7 @@ const register = async (req, res) => {
       const newClient = new Client({
         name,
         email,
+        isAdmin,
         phone,
         place,
         password: hashedPassword,
@@ -51,8 +52,13 @@ const register = async (req, res) => {
         certification: file[1].filename
       })
 
-      await newClient.save()
-      res.status(200).json(newClient)
+      await newClient.save();
+      jwt.sign({ email, password }, process.env.JWT_SECRET, { expiresIn: '5m' }, (error, token) => {
+        if (error) {
+          res.status(500).json(error);
+        }
+        res.status(200).json({ token, newClient });
+      });
     }
   }
   catch (error) {
@@ -60,7 +66,7 @@ const register = async (req, res) => {
   }
 };
 
-const isClientAuthenticated = async (req, res) => {
+const isAuthenticated = async (req, res) => {
   try {
     const { authorization } = req.headers;
     if (!authorization) throw new Error("Client is not authenticated");
@@ -79,4 +85,4 @@ const isClientAuthenticated = async (req, res) => {
 }
 
 
-module.exports = {login, register, isClientAuthenticated};
+module.exports = {login, register, isAuthenticated};
